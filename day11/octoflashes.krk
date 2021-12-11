@@ -1,0 +1,125 @@
+import fileio as fio
+
+def readoctogridfile(filename):
+    let energies = []
+    let width = 0
+    let height = 0
+    let widthfound = False
+    with fio.open(filename, "r") as f:
+        let c
+        while c = f.read(1):
+            if c == '\n':
+                height++
+                widthfound = True
+            else:
+                if not widthfound:
+                    width++
+                energies.append(int(c))
+    return energies, width, height
+
+class DubOcto:
+    def __init__(energy):
+        self.hasflashed = False
+        self.energy = energy
+    def can_flash():
+        return not self.hasflashed and self.energy >= 10
+    def gainenergy():
+        self.energy++
+    def flash():
+        self.hasflashed = True
+    def rest():
+        if self.hasflashed:
+            self.energy = 0
+        self.hasflashed = False
+
+# first make a class for dumbo octopi
+ class DumbOctoCluster:
+    def __init__(energies, width, height):
+        let octopi = [[DubOcto(energies[h*width+w]) for w in range(width)] for h in range(height)]
+        self.octopi   = octopi
+        self.width    = width
+        self.height   = height
+        self.flashes  = 0
+
+    def step():
+        self.gainenergy()
+        self.flash()
+
+    def gainenergy():
+        for octr in self.octopi:
+            for octo in octr:
+                octo.gainenergy()
+    def flash():
+        let newenergies = [[self.octopi[h][w].energy for w in range(self.width)] for h in range(self.height)]
+        
+        for h in range(self.height):
+            for w in range(self.width):
+                if self.octopi[h][w].can_flash():
+                    self.octopi[h][w].flash()
+                    self.flashes++
+                    if h>0:
+                        newenergies[h-1][w]++
+                        if w>0:
+                            newenergies[h-1][w-1]++
+                        if w+1<self.width:
+                            newenergies[h-1][w+1]++
+                    if h+1<self.height:
+                        newenergies[h+1][w]++
+                        if w>0:
+                            newenergies[h+1][w-1]++
+                        if w+1<self.width:
+                            newenergies[h+1][w+1]++
+                    if w>0:
+                        newenergies[h][w-1]++
+                    if w+1<self.width:
+                        newenergies[h][w+1]++
+
+        for h in range(self.height):
+            for w in range(self.width):
+                self.octopi[h][w].energy = newenergies[h][w]
+
+        for h in range(self.height):
+            for w in range(self.width):
+                if self.octopi[h][w].can_flash():
+                    return self.flash()
+                    break
+        self.rest()
+
+    def __str__():
+        let out = []
+        for h in range(self.height):
+            for w in range(self.width):
+                out.append(str(self.octopi[h][w].energy) + " ")
+            out.append("\n")
+        return "".join(out)
+
+    def rest():
+        for octr in self.octopi:
+            for octo in octr:
+                octo.rest()
+
+    def allflashed():
+        for octr in self.octopi:
+            for octo in octr:
+                if octo.energy != 0:
+                    return False
+        return True
+
+def sol1():
+    let data, w, h  = readoctogridfile("input.txt")
+    let dc = DumbOctoCluster(data, w, h)
+    let steps = 100
+    for _ in range(steps):
+        dc.step()
+    print("There were", dc.flashes, "flashes.")
+    print("Done :)")
+
+def sol2():
+    let data, w, h  = readoctogridfile("input.txt")
+    let dc = DumbOctoCluster(data, w, h)
+    let steps = 0
+    while not dc.allflashed():
+        dc.step()
+        steps++
+    print("There all synced up on the", steps, "th step.")
+    print("Done :)")

@@ -1,0 +1,3 @@
+from octoflashes import sol2
+
+sol2()
