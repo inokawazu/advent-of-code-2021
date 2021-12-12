@@ -1,0 +1,92 @@
+from fileio import open
+
+def cavesystemfromfile(filename:str):
+    let lines
+    with open(filename, "r") as f:
+        lines = f.readlines()
+    let cs = CaveSystem()
+    for line in lines:
+        let ent1, ent2 = line.strip().split("-")
+        cs.addcaves(ent1, ent2)
+    return cs
+
+# Count Cave Paths for cave system
+# 1 Gather Cave Entrances
+# 2 Find the amount of paths per entrance
+# 3 Add the amounts and return it
+
+# Count cave paths per entrance
+# Given no caves visited and an initial cave
+# return the sum of all the cave paths for the connected caves that
+#   aren't visted already or are large
+# and (1 if isexit else 0)
+
+class CaveSystem:
+    def __init__():
+        self.caves = dict()
+    def addcaves(ent1:str,ent2:str):
+        self.addcave(ent1)
+        self.addcave(ent2)
+        self.connect(ent1, ent2)
+    def addcave(name:str):
+        if name not in self.caves:
+            self.caves[name] = Cave(name)
+    def connect(n1:str, n2:str):
+        let cv1 = self.caves[n1]
+        let cv2 = self.caves[n2]
+        cv1.addconnection(cv2)
+        cv2.addconnection(cv1)
+    def pathsstarttoend(db=0):
+        return self.caves["start"].pathstoend(None, db)
+    def __str__():
+        let cvs = [str(cv) for _, cv in self.caves.items()]
+        return "\n".join(cvs)
+
+class Cave:
+    def __init__(name:str):
+        self.name      = name
+        self.connected = dict()
+    def islarge():
+        return self.name.isupper()
+    def isend():
+        return self.name == "end"
+    def isstart():
+        return self.name == "start"
+    def addconnection(cv):
+        if cv.name not in self.connected:
+            self.connected[cv.name] = cv
+    def pathstoend(visited, db=0):
+        let tobevisited = set(visited) if visited else set()
+        tobevisited.add(self.name)
+        let paths = 1 if self.isend() else 0
+        for name, cv in self.connected.items():
+            if cv.islarge() or name not in tobevisited:
+                paths += cv.pathstoend(tobevisited,db)
+            elif db > 0 and not cv.islarge() and name in tobevisited and not cv.isend() and not cv.isstart():
+                paths += cv.pathstoend(tobevisited,db-1)
+        return paths
+    def __str__():
+        let con = "-".join(self.connected.keys())
+        return self.name + "=>" + con
+
+let inputfile = "input.txt"
+
+def sol1():
+    print("Creating cave system...")
+    let cs = cavesystemfromfile(inputfile)
+    #print(cs)
+    print("Travesing cave system...")
+    let paths = cs.pathsstarttoend()
+    print(f"There are {paths} paths.")
+
+def sol2():
+    print("Creating cave system...")
+    let cs = cavesystemfromfile(inputfile)
+    #print(cs)
+    print("Travesing cave with 1 double back system...")
+    let paths = cs.pathsstarttoend(1)
+    print(f"There are {paths} paths.")
+sol1()
+print("")
+sol2()
+print("Done :>")
