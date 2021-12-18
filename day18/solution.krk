@@ -1,0 +1,193 @@
+import fileio as fio
+
+class SNNumber:
+    def __init__(left, right):
+        self.left = left
+        self.right = right
+
+    def __str__():
+        return f"[{self.left},{self.right}]"
+    def __add__(other):
+        let working = SNNumber(self.deepcopy(), other.deepcopy())
+        working.reduce()
+        return working
+
+    def deepcopy():
+        return SNNumber(self.left if not isnode(self.left) else self.left.deepcopy(), \
+                        self.right if not isnode(self.right) else self.right.deepcopy())
+
+    def reduce():
+        let isex
+        while (isex=self.isexplodable()) or self.issplitable():
+           if isex:
+               self.explode()
+           else:
+               self.split()
+
+    def isexplodable(depth=0):
+        return (depth >= 4) or \
+               (isnode(self.left) and self.left.isexplodable(depth+1)) or \
+               (isnode(self.right) and self.right.isexplodable(depth+1))
+
+    def isroot():
+        return not isnode(self.left) and not isnode(self.right)
+
+    def explode(depth=0):
+        let l,r
+        let fromroot
+
+        if depth >= 4 and self.isroot():
+            l = self.left
+            r = self.right
+            fromroot = True
+            return l,r,fromroot
+
+        if isnode(self.left) and self.left.isexplodable(depth+1):
+            l,r,fromroot = self.left.explode(depth+1)
+            if fromroot:
+                self.left = 0
+            if not isnode(self.right) and r != None:
+                self.right += r
+                r = None
+            elif isnode(self.right) and r != None:
+                getleftmost(self.right).left += r
+                r = None
+
+        elif isnode(self.right) and self.right.isexplodable(depth+1):
+            l,r,fromroot = self.right.explode(depth+1)
+            if fromroot:
+                self.right = 0
+            if not isnode(self.left) and l != None:
+                self.left += l
+                l = None
+            elif isnode(self.left) and l != None:
+                getrightmost(self.left).right += l
+                l = None
+
+        fromroot = False
+        return l,r,fromroot
+
+    def issplitable():
+        let lp,rp
+        lp = (isnode(self.left) and self.left.issplitable()) or \
+                (not isnode(self.left) and self.left >= 10)
+        rp = (isnode(self.right) and self.right.issplitable()) or \
+                (not isnode(self.right) and self.right >= 10)
+        return (lp or rp)
+
+    def split():
+        if isnode(self.left) and self.left.issplitable():
+            self.left.split()
+        elif not isnode(self.left) and self.left >= 10:
+            self.left = SNNumber(self.left//2, (self.left//2) + (self.left % 2))
+        elif isnode(self.right) and self.right.issplitable():
+            self.right.split()
+        elif not isnode(self.right) and self.right >= 10:
+            self.right = SNNumber(self.right//2, (self.right//2) + (self.right % 2))
+    
+    def magnitude():
+        return 3*(self.left.magnitude() if isnode(self.left) else self.left) + \
+                2*(self.right.magnitude() if isnode(self.right) else self.right)
+
+def isnode(x):
+    return type(x) == SNNumber
+
+def getrightmost(x:SNNumber):
+    return (getrightmost(x.right) if isnode(x.right) else x)
+
+def getleftmost(x:SNNumber):
+    return (getleftmost(x.left) if isnode(x.left) else x)
+
+def importdata(filename:str):
+    let lines
+    with fio.open(filename, 'r') as f:
+        lines = f.readlines()
+    return [strtosnn(line.strip()) for line in lines]
+
+def strtosnn(instr:str):
+    let i = 1
+
+    let lcount = 1
+    if instr[0] != "[":
+        print("invalid SNN input string")
+        print(instr)
+        return
+
+    let leftcs = []
+    let rightcs = []
+    let comma = False
+
+    for c in instr[1:]:
+        if c == "," and lcount == 1:
+            comma = True
+            continue
+        elif c == "[":
+            lcount++
+        elif c == "]":
+            lcount--
+            if lcount == 0:
+                break
+        if comma:
+            rightcs.append(c)
+        else:
+            leftcs.append(c)
+    let left = int("".join(leftcs)) if "".join(leftcs).isdigit() else strtosnn("".join(leftcs))
+    let right = int("".join(rightcs)) if "".join(rightcs).isdigit() else strtosnn("".join(rightcs))
+    return SNNumber(left,right)
+
+def testadd():
+    let snn1 = strtosnn("[[[[4,3],4],4],[7,[[8,4],9]]]")
+    let snn2 = strtosnn("[1,1]")
+    print(snn1 + snn2)
+    print("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]")
+
+def testexplode():
+    let tests = ["[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]", 
+            "[[[[0,7],4],[7,[[8,4],9]]],[1,1]]",
+            "[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]"]
+    let results = ["[[[[0,7],4],[7,[[8,4],9]]],[1,1]]",
+            "[[[[0,7],4],[15,[0,13]]],[1,1]]",
+            "[[[[0,7],4],[[7,8],[6,0]]],[8,1]]"]
+    for test, result in zip(tests, results):
+        let snn = strtosnn(test)
+        print("BT:", snn)
+        snn.explode()
+        print("AT:",snn)
+        print("AC:",result)
+
+def testexplode():
+    let snn = strtosnn("[[[[7,0],[14,0]],[[8,8],[9,10]]],[21,[[7,13],[10,0]]]")
+    print(snn)
+    snn.explode()
+    print(snn.isexplodable())
+    print(snn)
+
+def testadd2():
+    let snn1 = strtosnn("[[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]]")
+    let snn2 = strtosnn("[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]")
+    print("M:",snn1+snn2)
+    print("A:","[[[[7,8],[6,6]],[[6,0],[7,7]]],[[[7,8],[8,8]],[[7,9],[0,6]]]]")
+    print("Mag:",(snn1+snn2).magnitude())
+
+def sol1():
+    let snns = importdata("input.txt")
+    let answer = snns[0]
+    for snn in snns[1:]:
+        answer += snn
+    print("The sol1 magnitude is", answer.magnitude())
+
+def sol2():
+    let snns = importdata("input.txt")
+    let largest = 0
+    let current
+    for i, snnx in enumerate(snns):
+        for j, snny in enumerate(snns):
+            current = (snnx+snny).magnitude()
+            if i!=j and largest < current:
+                largest = current
+    print("The largest magnitude is", largest)
+
+
+sol1()
+sol2()
+print("Done *>")
